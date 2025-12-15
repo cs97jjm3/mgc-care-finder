@@ -3,12 +3,12 @@
 /**
  * Care Provider Finder (UK & Ireland) MCP Server
  * 
- * Find and compare care providers across 5 regulators:
- * - CQC (England) - Real-time API
- * - Care Inspectorate Scotland - Bundled CSV
- * - Care Inspectorate Wales - Coming soon
- * - RQIA (Northern Ireland) - Bundled CSV
- * - HIQA (Ireland) - Bundled CSV
+ * Find and compare care providers across UK & Ireland regulators:
+ * - CQC (England) - Real-time API ✅
+ * - Care Inspectorate Scotland - Bundled CSV ✅
+ * - Care Inspectorate Wales - Awaiting open data 🚧
+ * - RQIA (Northern Ireland) - Bundled CSV ✅
+ * - HIQA (Ireland) - Bundled CSV ✅
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -587,9 +587,9 @@ Data source: Care Inspectorate Scotland datastore (bundled, updated periodically
   },
   {
     name: "search_wales",
-    description: `Search Care Inspectorate Wales (CIW) registered services in Wales.
+    description: `Wales care provider information and guidance.
     
-Note: Wales data is not yet available - CIW does not provide a public API or downloadable data file.`,
+Note: Automated search not available - CIW does not provide open data access (no API or downloadable dataset). This tool provides information on how to find Wales care providers manually and explains when Wales support will be added.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -994,19 +994,39 @@ function handleSearchScotland(args: Record<string, unknown>): string {
 }
 
 function handleSearchWales(): string {
-  let result = `**Care Services in Wales (CIW)**\n\n`;
-  result += `🚧 **Wales data is not yet available**\n\n`;
-  result += `Care Inspectorate Wales (CIW) does not currently provide:\n`;
-  result += `- A public API\n`;
-  result += `- A downloadable data file (CSV/Excel)\n\n`;
-  result += `**How to get Wales data:**\n`;
-  result += `Data must be requested by email from CIW's Information Management team:\n`;
-  result += `📧 CIWInformation@gov.wales\n\n`;
-  result += `The data is available under the Open Government Licence once requested.\n\n`;
-  result += `**Alternative options:**\n`;
-  result += `- Search the CIW online directory: https://digital.careinspectorate.wales/directory\n`;
-  result += `- View CIW data tools: https://www.careinspectorate.wales/data-tools\n\n`;
-  result += `*Wales support will be added to a future version when CIW provides open data access.*`;
+  let result = `**Care Provider Search - Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿**\n\n`;
+  result += `🚧 **Data Not Available - Awaiting Open Data Access**\n\n`;
+  result += `Care Inspectorate Wales (CIW) does not currently provide open data access:\n`;
+  result += `❌ No public API\n`;
+  result += `❌ No downloadable dataset (CSV/Excel/JSON)\n`;
+  result += `❌ No bulk data export\n\n`;
+  result += `**Why this matters:** Without open data, we cannot include Wales providers in this automated search tool. Other UK countries (England, Scotland, N. Ireland) provide open data access, making comprehensive searches possible.\n\n`;
+  result += `---\n\n`;
+  result += `**How to Find Wales Care Providers:**\n\n`;
+  result += `**Option 1: CIW Online Directory** (Manual search)\n`;
+  result += `🔗 https://digital.careinspectorate.wales/directory\n`;
+  result += `- Search by location, service type, provider name\n`;
+  result += `- View individual provider details and inspection reports\n`;
+  result += `- Must search one-by-one (no bulk export)\n\n`;
+  result += `**Option 2: Request Data from CIW** (For research/business use)\n`;
+  result += `📧 Email: CIWInformation@gov.wales\n`;
+  result += `- Request the full register under Open Government Licence\n`;
+  result += `- Explain your legitimate use case\n`;
+  result += `- They may provide an Excel/CSV extract\n`;
+  result += `- If you receive data, please open a GitHub issue to help us add Wales support!\n\n`;
+  result += `**Option 3: CIW Statistics** (Limited data)\n`;
+  result += `🔗 https://www.careinspectorate.wales/data-tools\n`;
+  result += `- View aggregate statistics and reports\n`;
+  result += `- No individual provider listings\n\n`;
+  result += `---\n\n`;
+  result += `**When will Wales be added to this tool?**\n\n`;
+  result += `Wales support will be added as soon as CIW provides open data access through:\n`;
+  result += `✅ A public API (like England's CQC)\n`;
+  result += `✅ A downloadable dataset (like Scotland's Care Inspectorate)\n`;
+  result += `✅ Data extracts provided upon request\n\n`;
+  result += `**Help us add Wales:** If you have legitimate access to CIW data or know of data sources, please open an issue at:\n`;
+  result += `🔗 https://github.com/cs97jjm3/care-provider-finder/issues\n\n`;
+  result += `*Thank you for understanding. We're committed to adding Wales as soon as open data becomes available.*`;
   
   return result;
 }
