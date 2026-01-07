@@ -207,3 +207,21 @@ Available February 4th, 2025
 
 Found a bug? Have a feature request? Want to contribute Wales data?
 [Open an issue](https://github.com/cs97jjm3/care-provider-finder/issues) on GitHub!
+
+---
+
+## 📚 Learn to Build Tools Like This
+
+This tool was built using the methods described in **"The Business Analyst's Guide to AI-Assisted Tool Development"**.
+
+**Learn how to:**
+- Integrate multiple data sources
+- Work with APIs and CSV data
+- Build data search tools
+- Save hours on repetitive research
+
+**Get the guide:** https://murrelljames.gumroad.com/l/pvfww (£5)
+
+**Repository:** https://github.com/cs97jjm3/ba-ai-tools-guide
+
+**Case Study:** Chapter 4 covers building this tool in detail.
