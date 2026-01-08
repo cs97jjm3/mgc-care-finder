@@ -46,7 +46,7 @@ npm start
 
 ## Why This Exists
 
-This is the HTTP version of the [care-provider-finder MCP server](https://github.com/your-username/care-provider-finder). The MCP server works great with Claude Desktop but uses stdio which isn't accessible over a network.
+This is the HTTP version of the [care-provider-finder MCP server](https://github.com/cs97jjm3/care-provider-finder). The MCP server works great with Claude Desktop but uses stdio which isn't accessible over a network.
 
 **Use the HTTP API for:**
 - Excel data connections
