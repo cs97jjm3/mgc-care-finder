@@ -378,11 +378,41 @@ app.get('/api/search/radius', async (req, res) => {
             );
             
             return {
-              ...loc,
+              locationId: loc.locationId,
+              locationName: loc.locationName,
+              postalCode: loc.postalCode,
               latitude: details.onspdLatitude,
               longitude: details.onspdLongitude,
-              distance: Math.round(distance * 10) / 10, // Round to 1 decimal place
-              fullAddress: details.postalAddressLine1 + ', ' + details.postalAddressTownCity
+              distance: Math.round(distance * 10) / 10,
+              fullAddress: details.postalAddressLine1 + ', ' + details.postalAddressTownCity,
+              
+              // Ratings
+              rating: details.currentRatings?.overall?.rating || 'Not rated',
+              ratingSafe: details.currentRatings?.safe?.rating || 'Not rated',
+              ratingEffective: details.currentRatings?.effective?.rating || 'Not rated',
+              ratingCaring: details.currentRatings?.caring?.rating || 'Not rated',
+              ratingResponsive: details.currentRatings?.responsive?.rating || 'Not rated',
+              ratingWellLed: details.currentRatings?.wellLed?.rating || 'Not rated',
+              
+              // Contact & Details
+              phone: details.mainPhoneNumber || null,
+              website: details.website || null,
+              beds: details.numberOfBeds || null,
+              
+              // Status & History
+              registrationStatus: details.registrationStatus,
+              registrationDate: details.registrationDate || null,
+              lastInspectionDate: details.lastInspection?.date || null,
+              
+              // What They Do
+              serviceTypes: details.gacServiceTypes?.map((s: any) => s.name).join(', ') || null,
+              specialisms: details.specialisms?.map((s: any) => s.name).join(', ') || null,
+              
+              // Provider Info
+              providerName: details.organisationType === 'Location' ? details.name : null,
+              
+              // Links
+              cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
             };
           }
           return null;
@@ -393,9 +423,29 @@ app.get('/api/search/radius', async (req, res) => {
       })
     );
     
-    // Filter by radius and remove nulls
+    // Filter by radius, remove nulls, and exclude old deregistered homes
+    // Keep homes that are either:
+    // 1. Currently registered, OR
+    // 2. Deregistered within last 3 months (useful to spot recent closures)
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
     const filtered = locationsWithDistance
-      .filter(loc => loc !== null && loc.distance <= radiusMiles)
+      .filter((loc): loc is NonNullable<typeof loc> => {
+        if (!loc || loc.distance > radiusMiles) return false;
+        
+        // Keep if registered
+        if (loc.registrationStatus === 'Registered') return true;
+        
+        // Keep if deregistered recently (within 3 months)
+        if (loc.registrationStatus === 'Deregistered' && loc.lastInspectionDate) {
+          const lastInspection = new Date(loc.lastInspectionDate);
+          return lastInspection >= threeMonthsAgo;
+        }
+        
+        // Otherwise exclude
+        return false;
+      })
       .sort((a, b) => a.distance - b.distance)
       .slice(0, Number(maxResults));
     
