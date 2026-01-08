@@ -5,6 +5,32 @@ All notable changes to the Care Provider Finder HTTP API will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-08
+
+### Added
+- **8 New Market Intelligence Endpoints:**
+  - `/api/search/outstanding` - All Outstanding-rated homes (grouped by region)
+  - `/api/search/at-risk` - Homes rated Requires improvement / Inadequate
+  - `/api/search/recent-inspections` - Recently inspected homes (track rating changes)
+  - `/api/search/large-homes` - High capacity homes (corporate analysis)
+  - `/api/search/new-registrations` - New market entrants (track expansions)
+  - `/api/provider/portfolio` - All homes by provider (competitor analysis)
+  - `/api/analyze/services` - Homes offering specific services (Dementia, etc.)
+  - `/api/compare/regions` - Regional rating statistics (macro analysis)
+  - `/api/compare/authorities` - Local authority comparison (micro analysis)
+
+### Use Cases Enabled
+- **Investment Analysis:** Large homes, provider portfolios, at-risk turnarounds
+- **Market Research:** Regional comparisons, new entrants, Outstanding benchmarks
+- **Quality Monitoring:** Recent inspections, at-risk homes, rating trends
+- **Competitor Intelligence:** Provider portfolios, service specialization analysis
+- **Strategic Planning:** Market gaps, capacity analysis, expansion opportunities
+
+### Performance
+- All new endpoints: 5-30 seconds (CQC API dependent)
+- Regional comparison: ~45 seconds (queries all 9 regions)
+- Provider portfolio: Variable (depends on provider size)
+
 ## [2.1.0] - 2026-01-08
 
 ### Added

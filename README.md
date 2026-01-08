@@ -13,14 +13,28 @@ This HTTP API provides programmatic access to care provider data across the UK a
 
 ### Key Features
 
+**Search & Discovery:**
 - **Radius Search**: Find care homes within X miles of any UK postcode
 - **Comprehensive Data**: 20+ fields per location including ratings, contact details, capacity, services
 - **Smart Filtering**: Automatically excludes old deregistered homes, shows recent closures
 - **Multi-Country Search**: Query all four UK countries + Ireland
 - **Local Authority Search**: Filter by specific councils/regions
-- **Rating Filters**: Search by CQC ratings (Outstanding, Good, etc.)
+
+**Market Intelligence:** ⭐ NEW
+- **Outstanding Homes**: All top-rated homes grouped by region
+- **At-Risk Analysis**: Homes needing improvement (turnaround opportunities)
+- **Recent Inspections**: Track fresh CQC rating changes
+- **Large Capacity**: Corporate/investment-grade analysis
+- **New Entrants**: Track market expansion and new registrations
+- **Provider Portfolios**: Analyze entire operator performance
+- **Service Specialization**: Find homes offering specific care (Dementia, etc.)
+- **Regional Comparison**: Macro market statistics across England
+- **Authority Comparison**: Micro market analysis by local area
+
+**Integration:**
 - **Real-time England Data**: Direct CQC API integration
 - **Distance Calculation**: Automatically calculates and sorts by distance
+- **Excel-Ready**: Power Query compatible (see EXCEL-GUIDE.md)
 
 ## Quick Start
 
@@ -37,6 +51,7 @@ npm start
 ## Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
+- **[ENDPOINTS.md](ENDPOINTS.md)** - Quick reference of all 18 endpoints ⭐
 - **[API-DOCS.md](API-DOCS.md)** - Complete API reference with examples
 - **[EXCEL-GUIDE.md](EXCEL-GUIDE.md)** - Connect Excel using Power Query
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and technical decisions

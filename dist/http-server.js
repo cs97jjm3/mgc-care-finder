@@ -390,6 +390,581 @@ app.get('/api/postcode/:postcode', async (req, res) => {
         res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
     }
 });
+// Get all Outstanding-rated care homes (England)
+app.get('/api/search/outstanding', async (req, res) => {
+    try {
+        const { careHome = 'Y', region, maxResults = 100 } = req.query;
+        // Search for Outstanding rated providers
+        let url = `${CQC_API_BASE}/locations?overallRating=Outstanding`;
+        if (careHome)
+            url += `&careHome=${careHome}`;
+        if (region)
+            url += `&region=${encodeURIComponent(region)}`;
+        url += `&perPage=100`;
+        let allLocations = [];
+        let page = 1;
+        let hasMore = true;
+        // Fetch multiple pages up to maxResults
+        while (hasMore && allLocations.length < Number(maxResults)) {
+            const pageUrl = `${url}&page=${page}`;
+            const response = await fetch(pageUrl, {
+                headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            const data = await response.json();
+            if (data.locations && data.locations.length > 0) {
+                allLocations = allLocations.concat(data.locations);
+                hasMore = page < data.totalPages && allLocations.length < Number(maxResults);
+                page++;
+            }
+            else {
+                hasMore = false;
+            }
+        }
+        // Limit to maxResults
+        allLocations = allLocations.slice(0, Number(maxResults));
+        // Get full details for each location
+        const detailedLocations = await Promise.all(allLocations.map(async (loc) => {
+            try {
+                const detailUrl = `${CQC_API_BASE}/locations/${loc.locationId}`;
+                const detailRes = await fetch(detailUrl, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const details = await detailRes.json();
+                return {
+                    locationId: loc.locationId,
+                    locationName: loc.locationName,
+                    postalCode: loc.postalCode,
+                    localAuthority: details.localAuthority,
+                    region: details.region,
+                    latitude: details.onspdLatitude,
+                    longitude: details.onspdLongitude,
+                    fullAddress: details.postalAddressLine1 + ', ' + details.postalAddressTownCity,
+                    // Ratings
+                    rating: details.currentRatings?.overall?.rating || 'Not rated',
+                    ratingSafe: details.currentRatings?.safe?.rating || 'Not rated',
+                    ratingEffective: details.currentRatings?.effective?.rating || 'Not rated',
+                    ratingCaring: details.currentRatings?.caring?.rating || 'Not rated',
+                    ratingResponsive: details.currentRatings?.responsive?.rating || 'Not rated',
+                    ratingWellLed: details.currentRatings?.wellLed?.rating || 'Not rated',
+                    // Contact & Details
+                    phone: details.mainPhoneNumber || null,
+                    website: details.website || null,
+                    beds: details.numberOfBeds || null,
+                    // Status & History
+                    registrationStatus: details.registrationStatus,
+                    registrationDate: details.registrationDate || null,
+                    lastInspectionDate: details.lastInspection?.date || null,
+                    // What They Do
+                    serviceTypes: details.gacServiceTypes?.map((s) => s.name).join(', ') || null,
+                    specialisms: details.specialisms?.map((s) => s.name).join(', ') || null,
+                    // Provider Info
+                    providerName: details.organisationType === 'Location' ? details.name : null,
+                    // Links
+                    cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                };
+            }
+            catch (error) {
+                console.error(`Error fetching details for ${loc.locationId}:`, error);
+                return null;
+            }
+        }));
+        // Filter out nulls and only keep registered
+        const filtered = detailedLocations
+            .filter((loc) => loc !== null && loc.registrationStatus === 'Registered');
+        // Group by region if no region filter specified
+        if (!region) {
+            const byRegion = {};
+            filtered.forEach(loc => {
+                const r = loc.region || 'Unknown';
+                if (!byRegion[r])
+                    byRegion[r] = [];
+                byRegion[r].push(loc);
+            });
+            res.json({
+                total: filtered.length,
+                byRegion: Object.entries(byRegion).map(([region, locations]) => ({
+                    region,
+                    count: locations.length,
+                    locations
+                })).sort((a, b) => b.count - a.count)
+            });
+        }
+        else {
+            res.json({
+                total: filtered.length,
+                region: region,
+                locations: filtered
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 1. At-Risk Homes (Requires Improvement / Inadequate)
+app.get('/api/search/at-risk', async (req, res) => {
+    try {
+        const { careHome = 'Y', region, rating, maxResults = 100 } = req.query;
+        const ratings = rating ? [rating] : ['Requires improvement', 'Inadequate'];
+        let allLocations = [];
+        for (const r of ratings) {
+            let url = `${CQC_API_BASE}/locations?overallRating=${encodeURIComponent(r)}`;
+            if (careHome)
+                url += `&careHome=${careHome}`;
+            if (region)
+                url += `&region=${encodeURIComponent(region)}`;
+            url += `&perPage=100`;
+            let page = 1;
+            let hasMore = true;
+            while (hasMore && allLocations.length < Number(maxResults)) {
+                const response = await fetch(`${url}&page=${page}`, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const data = await response.json();
+                if (data.locations && data.locations.length > 0) {
+                    allLocations = allLocations.concat(data.locations);
+                    hasMore = page < data.totalPages;
+                    page++;
+                }
+                else {
+                    hasMore = false;
+                }
+            }
+        }
+        allLocations = allLocations.slice(0, Number(maxResults));
+        const detailedLocations = await Promise.all(allLocations.map(async (loc) => {
+            try {
+                const detailRes = await fetch(`${CQC_API_BASE}/locations/${loc.locationId}`, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const details = await detailRes.json();
+                return {
+                    locationId: loc.locationId,
+                    locationName: loc.locationName,
+                    postalCode: loc.postalCode,
+                    localAuthority: details.localAuthority,
+                    region: details.region,
+                    fullAddress: details.postalAddressLine1 + ', ' + details.postalAddressTownCity,
+                    rating: details.currentRatings?.overall?.rating || 'Not rated',
+                    phone: details.mainPhoneNumber || null,
+                    beds: details.numberOfBeds || null,
+                    registrationStatus: details.registrationStatus,
+                    lastInspectionDate: details.lastInspection?.date || null,
+                    providerName: details.name || null,
+                    cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                };
+            }
+            catch (error) {
+                return null;
+            }
+        }));
+        const filtered = detailedLocations.filter((loc) => loc !== null && loc.registrationStatus === 'Registered');
+        res.json({
+            total: filtered.length,
+            locations: filtered.sort((a, b) => {
+                if (a.rating === 'Inadequate' && b.rating !== 'Inadequate')
+                    return -1;
+                if (a.rating !== 'Inadequate' && b.rating === 'Inadequate')
+                    return 1;
+                return 0;
+            })
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 2. Recently Inspected Homes
+app.get('/api/search/recent-inspections', async (req, res) => {
+    try {
+        const { days = 30, careHome = 'Y', region, maxResults = 100 } = req.query;
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - Number(days));
+        let url = `${CQC_API_BASE}/locations?`;
+        if (careHome)
+            url += `careHome=${careHome}&`;
+        if (region)
+            url += `region=${encodeURIComponent(region)}&`;
+        url += `perPage=100`;
+        let allLocations = [];
+        let page = 1;
+        while (allLocations.length < Number(maxResults) && page <= 10) {
+            const response = await fetch(`${url}&page=${page}`, {
+                headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            const data = await response.json();
+            if (data.locations && data.locations.length > 0) {
+                allLocations = allLocations.concat(data.locations);
+                page++;
+            }
+            else {
+                break;
+            }
+        }
+        const recentlyInspected = allLocations.filter(loc => {
+            if (!loc.lastInspection?.date)
+                return false;
+            const inspectionDate = new Date(loc.lastInspection.date);
+            return inspectionDate >= daysAgo;
+        });
+        res.json({
+            total: recentlyInspected.length,
+            daysAgo: Number(days),
+            locations: recentlyInspected.slice(0, Number(maxResults)).map(loc => ({
+                locationId: loc.locationId,
+                locationName: loc.locationName,
+                postalCode: loc.postalCode,
+                region: loc.region,
+                rating: loc.overallRating,
+                lastInspectionDate: loc.lastInspection?.date,
+                cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+            }))
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 3. Large Capacity Homes
+app.get('/api/search/large-homes', async (req, res) => {
+    try {
+        const { minBeds = 50, careHome = 'Y', region, rating, maxResults = 100 } = req.query;
+        let url = `${CQC_API_BASE}/locations?`;
+        if (careHome)
+            url += `careHome=${careHome}&`;
+        if (region)
+            url += `region=${encodeURIComponent(region)}&`;
+        if (rating)
+            url += `overallRating=${rating}&`;
+        url += `perPage=100`;
+        let allLocations = [];
+        let page = 1;
+        while (page <= 10) {
+            const response = await fetch(`${url}&page=${page}`, {
+                headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            const data = await response.json();
+            if (data.locations && data.locations.length > 0) {
+                allLocations = allLocations.concat(data.locations);
+                page++;
+            }
+            else {
+                break;
+            }
+        }
+        const detailedLocations = await Promise.all(allLocations.slice(0, 200).map(async (loc) => {
+            try {
+                const detailRes = await fetch(`${CQC_API_BASE}/locations/${loc.locationId}`, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const details = await detailRes.json();
+                if (details.numberOfBeds >= Number(minBeds)) {
+                    return {
+                        locationId: loc.locationId,
+                        locationName: loc.locationName,
+                        postalCode: loc.postalCode,
+                        localAuthority: details.localAuthority,
+                        region: details.region,
+                        beds: details.numberOfBeds,
+                        rating: details.currentRatings?.overall?.rating,
+                        phone: details.mainPhoneNumber,
+                        registrationStatus: details.registrationStatus,
+                        providerName: details.name,
+                        cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                    };
+                }
+                return null;
+            }
+            catch (error) {
+                return null;
+            }
+        }));
+        const filtered = detailedLocations
+            .filter((loc) => loc !== null && loc.registrationStatus === 'Registered')
+            .sort((a, b) => (b.beds || 0) - (a.beds || 0))
+            .slice(0, Number(maxResults));
+        res.json({
+            total: filtered.length,
+            minBeds: Number(minBeds),
+            locations: filtered
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 4. New Registrations
+app.get('/api/search/new-registrations', async (req, res) => {
+    try {
+        const { months = 6, careHome = 'Y', region, maxResults = 100 } = req.query;
+        const monthsAgo = new Date();
+        monthsAgo.setMonth(monthsAgo.getMonth() - Number(months));
+        let url = `${CQC_API_BASE}/locations?`;
+        if (careHome)
+            url += `careHome=${careHome}&`;
+        if (region)
+            url += `region=${encodeURIComponent(region)}&`;
+        url += `perPage=100`;
+        let allLocations = [];
+        let page = 1;
+        while (page <= 10) {
+            const response = await fetch(`${url}&page=${page}`, {
+                headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            const data = await response.json();
+            if (data.locations && data.locations.length > 0) {
+                allLocations = allLocations.concat(data.locations);
+                page++;
+            }
+            else {
+                break;
+            }
+        }
+        const detailedLocations = await Promise.all(allLocations.slice(0, 200).map(async (loc) => {
+            try {
+                const detailRes = await fetch(`${CQC_API_BASE}/locations/${loc.locationId}`, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const details = await detailRes.json();
+                if (details.registrationDate) {
+                    const regDate = new Date(details.registrationDate);
+                    if (regDate >= monthsAgo) {
+                        return {
+                            locationId: loc.locationId,
+                            locationName: loc.locationName,
+                            postalCode: loc.postalCode,
+                            localAuthority: details.localAuthority,
+                            region: details.region,
+                            registrationDate: details.registrationDate,
+                            beds: details.numberOfBeds,
+                            rating: details.currentRatings?.overall?.rating || 'Not rated',
+                            providerName: details.name,
+                            cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                        };
+                    }
+                }
+                return null;
+            }
+            catch (error) {
+                return null;
+            }
+        }));
+        const filtered = detailedLocations
+            .filter((loc) => loc !== null)
+            .sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime())
+            .slice(0, Number(maxResults));
+        res.json({
+            total: filtered.length,
+            monthsAgo: Number(months),
+            locations: filtered
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 5. Provider Portfolio
+app.get('/api/provider/portfolio', async (req, res) => {
+    try {
+        const { providerName, providerId } = req.query;
+        if (!providerName && !providerId) {
+            return res.status(400).json({ error: 'providerName or providerId is required' });
+        }
+        let url = `${CQC_API_BASE}/locations?perPage=100`;
+        if (providerId)
+            url += `&providerId=${providerId}`;
+        let allLocations = [];
+        let page = 1;
+        while (page <= 20) {
+            const response = await fetch(`${url}&page=${page}`, {
+                headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            const data = await response.json();
+            if (data.locations && data.locations.length > 0) {
+                allLocations = allLocations.concat(data.locations);
+                page++;
+            }
+            else {
+                break;
+            }
+        }
+        if (providerName) {
+            allLocations = allLocations.filter(loc => loc.organisationName?.toLowerCase().includes(providerName.toLowerCase()));
+        }
+        const detailedLocations = await Promise.all(allLocations.map(async (loc) => {
+            try {
+                const detailRes = await fetch(`${CQC_API_BASE}/locations/${loc.locationId}`, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const details = await detailRes.json();
+                return {
+                    locationId: loc.locationId,
+                    locationName: loc.locationName,
+                    postalCode: loc.postalCode,
+                    localAuthority: details.localAuthority,
+                    region: details.region,
+                    beds: details.numberOfBeds,
+                    rating: details.currentRatings?.overall?.rating,
+                    registrationStatus: details.registrationStatus,
+                    lastInspectionDate: details.lastInspection?.date,
+                    cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                };
+            }
+            catch (error) {
+                return null;
+            }
+        }));
+        const filtered = detailedLocations.filter((loc) => loc !== null);
+        const stats = {
+            totalLocations: filtered.length,
+            totalBeds: filtered.reduce((sum, loc) => sum + (loc.beds || 0), 0),
+            registeredCount: filtered.filter(l => l.registrationStatus === 'Registered').length,
+            ratingBreakdown: {
+                Outstanding: filtered.filter(l => l.rating === 'Outstanding').length,
+                Good: filtered.filter(l => l.rating === 'Good').length,
+                'Requires improvement': filtered.filter(l => l.rating === 'Requires improvement').length,
+                Inadequate: filtered.filter(l => l.rating === 'Inadequate').length,
+                'Not rated': filtered.filter(l => l.rating === 'Not rated').length
+            }
+        };
+        res.json({ provider: providerName || providerId, stats, locations: filtered });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 6. Service Type Analysis
+app.get('/api/analyze/services', async (req, res) => {
+    try {
+        const { serviceType, region, rating, maxResults = 100 } = req.query;
+        if (!serviceType) {
+            return res.status(400).json({ error: 'serviceType is required (e.g., "Dementia", "Learning disabilities")' });
+        }
+        let url = `${CQC_API_BASE}/locations?careHome=Y&perPage=100`;
+        if (region)
+            url += `&region=${encodeURIComponent(region)}`;
+        if (rating)
+            url += `&overallRating=${rating}`;
+        let allLocations = [];
+        let page = 1;
+        while (page <= 10) {
+            const response = await fetch(`${url}&page=${page}`, {
+                headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            const data = await response.json();
+            if (data.locations && data.locations.length > 0) {
+                allLocations = allLocations.concat(data.locations);
+                page++;
+            }
+            else {
+                break;
+            }
+        }
+        const detailedLocations = await Promise.all(allLocations.slice(0, 200).map(async (loc) => {
+            try {
+                const detailRes = await fetch(`${CQC_API_BASE}/locations/${loc.locationId}`, {
+                    headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+                });
+                const details = await detailRes.json();
+                const hasService = details.specialisms?.some((s) => s.name?.toLowerCase().includes(serviceType.toLowerCase())) || details.gacServiceTypes?.some((s) => s.name?.toLowerCase().includes(serviceType.toLowerCase()));
+                if (hasService) {
+                    return {
+                        locationId: loc.locationId,
+                        locationName: loc.locationName,
+                        postalCode: loc.postalCode,
+                        localAuthority: details.localAuthority,
+                        region: details.region,
+                        beds: details.numberOfBeds,
+                        rating: details.currentRatings?.overall?.rating,
+                        serviceTypes: details.gacServiceTypes?.map((s) => s.name).join(', '),
+                        specialisms: details.specialisms?.map((s) => s.name).join(', '),
+                        phone: details.mainPhoneNumber,
+                        registrationStatus: details.registrationStatus,
+                        cqcReportUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                    };
+                }
+                return null;
+            }
+            catch (error) {
+                return null;
+            }
+        }));
+        const filtered = detailedLocations
+            .filter((loc) => loc !== null && loc.registrationStatus === 'Registered')
+            .slice(0, Number(maxResults));
+        res.json({ serviceType, total: filtered.length, locations: filtered });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 7. Compare Regions
+app.get('/api/compare/regions', async (req, res) => {
+    try {
+        const { careHome = 'Y' } = req.query;
+        const regions = [
+            'London', 'South East', 'South West', 'East of England',
+            'West Midlands', 'East Midlands', 'Yorkshire and the Humber',
+            'North West', 'North East'
+        ];
+        const regionStats = await Promise.all(regions.map(async (region) => {
+            try {
+                const response = await fetch(`${CQC_API_BASE}/locations?region=${encodeURIComponent(region)}&careHome=${careHome}&perPage=1`, { headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY } });
+                const data = await response.json();
+                const ratings = await Promise.all(['Outstanding', 'Good', 'Requires improvement', 'Inadequate'].map(async (rating) => {
+                    const ratingRes = await fetch(`${CQC_API_BASE}/locations?region=${encodeURIComponent(region)}&careHome=${careHome}&overallRating=${rating}&perPage=1`, { headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY } });
+                    const ratingData = await ratingRes.json();
+                    return { rating, count: ratingData.total || 0 };
+                }));
+                return {
+                    region,
+                    totalHomes: data.total || 0,
+                    ratings: ratings.reduce((acc, r) => ({ ...acc, [r.rating]: r.count }), {})
+                };
+            }
+            catch (error) {
+                return { region, totalHomes: 0, ratings: {} };
+            }
+        }));
+        res.json({ regions: regionStats.sort((a, b) => b.totalHomes - a.totalHomes) });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
+// 8. Compare Local Authorities
+app.get('/api/compare/authorities', async (req, res) => {
+    try {
+        const { authorities, careHome = 'Y' } = req.query;
+        if (!authorities) {
+            return res.status(400).json({ error: 'authorities parameter required (comma-separated list)' });
+        }
+        const authorityList = authorities.split(',').map(a => a.trim());
+        const authorityStats = await Promise.all(authorityList.map(async (authority) => {
+            try {
+                const response = await fetch(`${CQC_API_BASE}/locations?localAuthority=${encodeURIComponent(authority)}&careHome=${careHome}&perPage=1`, { headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY } });
+                const data = await response.json();
+                const ratings = await Promise.all(['Outstanding', 'Good', 'Requires improvement', 'Inadequate'].map(async (rating) => {
+                    const ratingRes = await fetch(`${CQC_API_BASE}/locations?localAuthority=${encodeURIComponent(authority)}&careHome=${careHome}&overallRating=${rating}&perPage=1`, { headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY } });
+                    const ratingData = await ratingRes.json();
+                    return { rating, count: ratingData.total || 0 };
+                }));
+                return {
+                    localAuthority: authority,
+                    totalHomes: data.total || 0,
+                    ratings: ratings.reduce((acc, r) => ({ ...acc, [r.rating]: r.count }), {})
+                };
+            }
+            catch (error) {
+                return { localAuthority: authority, totalHomes: 0, ratings: {} };
+            }
+        }));
+        res.json({ authorities: authorityStats });
+    }
+    catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+});
 // Start server
 initializeData();
 app.listen(PORT, () => {

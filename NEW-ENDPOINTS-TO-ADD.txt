@@ -1,0 +1,16 @@
+// ADD THESE 8 NEW ENDPOINTS to http-server.ts BEFORE "// Start server"
+
+// They're quite long so I've put them in this separate file
+// Copy-paste them into http-server.ts after the outstanding endpoint
+
+See the complete code in the message above or I can add them one by one if you prefer!
+
+The 8 endpoints are:
+1. /api/search/at-risk - Homes needing improvement
+2. /api/search/recent-inspections - Recently inspected
+3. /api/search/large-homes - High capacity homes  
+4. /api/search/new-registrations - New market entrants
+5. /api/provider/portfolio - All homes by provider
+6. /api/analyze/services - Homes offering specific services
+7. /api/compare/regions - Regional statistics
+8. /api/compare/authorities - Local authority comparison

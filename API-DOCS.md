@@ -633,6 +633,464 @@ GET /api/postcode/PE13%202PR
 
 ---
 
+## Analysis & Comparison Endpoints
+
+These endpoints provide market intelligence and comparative analysis across providers, regions, and services.
+
+### Get All Outstanding Homes
+
+Find all Outstanding-rated care homes in England, optionally filtered by region.
+
+**Endpoint:** `GET /api/search/outstanding`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `careHome` | string | No | Y=care homes, N=other (default: Y) | `Y` |
+| `region` | string | No | Filter by region | `London` |
+| `maxResults` | number | No | Max results (default: 100) | `50` |
+
+**Example Request:**
+```
+GET /api/search/outstanding?region=London&maxResults=50
+```
+
+**Example Response (without region filter - grouped):**
+```json
+{
+  "total": 150,
+  "byRegion": [
+    {
+      "region": "London",
+      "count": 45,
+      "locations": [...]
+    },
+    {
+      "region": "South East",
+      "count": 32,
+      "locations": [...]
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Identify best-performing homes
+- Benchmark against excellence
+- Market research on quality leaders
+
+**Status Codes:**
+- `200` - OK
+- `500` - Server error
+
+---
+
+### Get At-Risk Homes
+
+Find care homes rated "Requires improvement" or "Inadequate" - potential turnaround opportunities or quality concerns.
+
+**Endpoint:** `GET /api/search/at-risk`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `careHome` | string | No | Y=care homes only (default: Y) | `Y` |
+| `region` | string | No | Filter by region | `North West` |
+| `rating` | string | No | Specific rating | `Inadequate` |
+| `maxResults` | number | No | Max results (default: 100) | `50` |
+
+**Example Request:**
+```
+GET /api/search/at-risk?rating=Inadequate&region=London
+```
+
+**Example Response:**
+```json
+{
+  "total": 25,
+  "locations": [
+    {
+      "locationId": "1-123456",
+      "locationName": "Example Care Home",
+      "rating": "Inadequate",
+      "lastInspectionDate": "2024-06-15",
+      "beds": 30,
+      "phone": "020 1234 5678"
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Identify struggling homes
+- Acquisition targets for turnaround
+- Quality monitoring
+- Due diligence red flags
+
+**Status Codes:**
+- `200` - OK
+- `500` - Server error
+
+---
+
+### Recently Inspected Homes
+
+Find homes inspected within the last X days - useful for spotting fresh rating changes.
+
+**Endpoint:** `GET /api/search/recent-inspections`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `days` | number | No | Days to look back (default: 30) | `60` |
+| `careHome` | string | No | Y=care homes only (default: Y) | `Y` |
+| `region` | string | No | Filter by region | `East of England` |
+| `maxResults` | number | No | Max results (default: 100) | `50` |
+
+**Example Request:**
+```
+GET /api/search/recent-inspections?days=30&region=London
+```
+
+**Example Response:**
+```json
+{
+  "total": 45,
+  "daysAgo": 30,
+  "locations": [
+    {
+      "locationId": "1-123456",
+      "locationName": "Example Care Home",
+      "rating": "Good",
+      "lastInspectionDate": "2026-01-05"
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Track CQC inspection activity
+- Spot recent rating changes
+- Monitor regulatory trends
+
+**Status Codes:**
+- `200` - OK
+- `500` - Server error
+
+---
+
+### Large Capacity Homes
+
+Find care homes with a minimum number of beds - useful for corporate/investment analysis.
+
+**Endpoint:** `GET /api/search/large-homes`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `minBeds` | number | No | Minimum beds (default: 50) | `100` |
+| `careHome` | string | No | Y=care homes only (default: Y) | `Y` |
+| `region` | string | No | Filter by region | `South East` |
+| `rating` | string | No | Filter by rating | `Good` |
+| `maxResults` | number | No | Max results (default: 100) | `50` |
+
+**Example Request:**
+```
+GET /api/search/large-homes?minBeds=100&rating=Outstanding
+```
+
+**Example Response:**
+```json
+{
+  "total": 15,
+  "minBeds": 100,
+  "locations": [
+    {
+      "locationId": "1-123456",
+      "locationName": "Large Care Home",
+      "beds": 120,
+      "rating": "Outstanding",
+      "region": "London"
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Corporate acquisitions
+- Large-scale operator analysis
+- Market capacity planning
+
+**Status Codes:**
+- `200` - OK
+- `500` - Server error
+
+---
+
+### New Registrations
+
+Find care homes registered within the last X months - track new market entrants.
+
+**Endpoint:** `GET /api/search/new-registrations`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `months` | number | No | Months to look back (default: 6) | `12` |
+| `careHome` | string | No | Y=care homes only (default: Y) | `Y` |
+| `region` | string | No | Filter by region | `West Midlands` |
+| `maxResults` | number | No | Max results (default: 100) | `50` |
+
+**Example Request:**
+```
+GET /api/search/new-registrations?months=6&region=London
+```
+
+**Example Response:**
+```json
+{
+  "total": 12,
+  "monthsAgo": 6,
+  "locations": [
+    {
+      "locationId": "1-123456",
+      "locationName": "New Care Home",
+      "registrationDate": "2025-10-15",
+      "beds": 45,
+      "rating": "Not rated"
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Track market expansion
+- Identify new competitors
+- Monitor market entry trends
+
+**Status Codes:**
+- `200` - OK
+- `500` - Server error
+
+---
+
+### Provider Portfolio
+
+Get all homes owned/operated by a specific provider - analyze operator performance.
+
+**Endpoint:** `GET /api/provider/portfolio`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `providerName` | string | One required | Provider name (partial match) | `Barchester` |
+| `providerId` | string | One required | CQC provider ID | `1-123456789` |
+
+**Example Request:**
+```
+GET /api/provider/portfolio?providerName=Barchester
+```
+
+**Example Response:**
+```json
+{
+  "provider": "Barchester",
+  "stats": {
+    "totalLocations": 45,
+    "totalBeds": 2500,
+    "registeredCount": 45,
+    "ratingBreakdown": {
+      "Outstanding": 5,
+      "Good": 35,
+      "Requires improvement": 4,
+      "Inadequate": 1,
+      "Not rated": 0
+    }
+  },
+  "locations": [...]
+}
+```
+
+**Use Cases:**
+- Competitor analysis
+- Operator performance benchmarking
+- Market share analysis
+- Investment due diligence
+
+**Status Codes:**
+- `200` - OK
+- `400` - Missing required parameter
+- `500` - Server error
+
+---
+
+### Service Type Analysis
+
+Find all homes offering a specific service (e.g., Dementia, Learning disabilities).
+
+**Endpoint:** `GET /api/analyze/services`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `serviceType` | string | Yes | Service to search for | `Dementia` |
+| `region` | string | No | Filter by region | `Yorkshire and the Humber` |
+| `rating` | string | No | Filter by rating | `Outstanding` |
+| `maxResults` | number | No | Max results (default: 100) | `50` |
+
+**Common Service Types:**
+- `Dementia`
+- `Learning disabilities`
+- `Mental health conditions`
+- `Physical disabilities`
+- `Sensory impairment`
+
+**Example Request:**
+```
+GET /api/analyze/services?serviceType=Dementia&rating=Outstanding
+```
+
+**Example Response:**
+```json
+{
+  "serviceType": "Dementia",
+  "total": 78,
+  "locations": [
+    {
+      "locationId": "1-123456",
+      "locationName": "Specialist Care Home",
+      "specialisms": "Dementia, Caring for adults over 65",
+      "rating": "Outstanding",
+      "beds": 45
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Specialized care market analysis
+- Service gap identification
+- Referral network building
+
+**Status Codes:**
+- `200` - OK
+- `400` - Missing serviceType parameter
+- `500` - Server error
+
+---
+
+### Compare Regions
+
+Get rating distribution statistics for all English regions - macro market analysis.
+
+**Endpoint:** `GET /api/compare/regions`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `careHome` | string | No | Y=care homes only (default: Y) | `Y` |
+
+**Example Request:**
+```
+GET /api/compare/regions
+```
+
+**Example Response:**
+```json
+{
+  "regions": [
+    {
+      "region": "London",
+      "totalHomes": 892,
+      "ratings": {
+        "Outstanding": 45,
+        "Good": 650,
+        "Requires improvement": 180,
+        "Inadequate": 17
+      }
+    },
+    {
+      "region": "South East",
+      "totalHomes": 1245,
+      "ratings": {...}
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- National market overview
+- Regional investment decisions
+- Quality trends by region
+- Market size comparison
+
+**Status Codes:**
+- `200` - OK
+- `500` - Server error
+
+---
+
+### Compare Local Authorities
+
+Compare rating statistics across multiple local authorities - local market analysis.
+
+**Endpoint:** `GET /api/compare/authorities`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `authorities` | string | Yes | Comma-separated list | `Cambridgeshire,Peterborough` |
+| `careHome` | string | No | Y=care homes only (default: Y) | `Y` |
+
+**Example Request:**
+```
+GET /api/compare/authorities?authorities=Cambridgeshire,Peterborough,Norfolk
+```
+
+**Example Response:**
+```json
+{
+  "authorities": [
+    {
+      "localAuthority": "Cambridgeshire",
+      "totalHomes": 281,
+      "ratings": {
+        "Outstanding": 12,
+        "Good": 220,
+        "Requires improvement": 45,
+        "Inadequate": 4
+      }
+    },
+    {
+      "localAuthority": "Peterborough",
+      "totalHomes": 89,
+      "ratings": {...}
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Local market comparison
+- Site selection analysis
+- Regional expansion planning
+
+**Status Codes:**
+- `200` - OK
+- `400` - Missing authorities parameter
+- `500` - Server error
+
+---
+
 ## Common Workflows
 
 ### Workflow 1: Find Nearest Care Homes
