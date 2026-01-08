@@ -14,6 +14,8 @@ This HTTP API provides programmatic access to care provider data across the UK a
 ### Key Features
 
 - **Radius Search**: Find care homes within X miles of any UK postcode
+- **Comprehensive Data**: 20+ fields per location including ratings, contact details, capacity, services
+- **Smart Filtering**: Automatically excludes old deregistered homes, shows recent closures
 - **Multi-Country Search**: Query all four UK countries + Ireland
 - **Local Authority Search**: Filter by specific councils/regions
 - **Rating Filters**: Search by CQC ratings (Outstanding, Good, etc.)

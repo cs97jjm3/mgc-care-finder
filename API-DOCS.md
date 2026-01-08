@@ -91,7 +91,7 @@ GET /api/search/radius?postcode=PE13+2PR&miles=10&careHome=Y&rating=Good
     "localAuthority": "Fenland"
   },
   "radiusMiles": 10,
-  "count": 15,
+  "count": 6,
   "locations": [
     {
       "locationId": "1-123039495",
@@ -100,7 +100,29 @@ GET /api/search/radius?postcode=PE13+2PR&miles=10&careHome=Y&rating=Good
       "latitude": 52.6621084,
       "longitude": 0.1573108,
       "distance": 0.2,
-      "fullAddress": "26 Queens Road, Wisbech"
+      "fullAddress": "26 Queens Road, Wisbech",
+      
+      "rating": "Good",
+      "ratingSafe": "Good",
+      "ratingEffective": "Good",
+      "ratingCaring": "Good",
+      "ratingResponsive": "Good",
+      "ratingWellLed": "Good",
+      
+      "phone": "01945582324",
+      "website": "www.langley-lodge.co.uk",
+      "beds": 20,
+      
+      "registrationStatus": "Registered",
+      "registrationDate": "2010-11-26",
+      "lastInspectionDate": "2024-01-15",
+      
+      "serviceTypes": "Residential homes",
+      "specialisms": "Caring for adults over 65 yrs, Dementia",
+      
+      "providerName": "Langley Lodge Ltd",
+      
+      "cqcReportUrl": "https://www.cqc.org.uk/location/1-123039495"
     },
     {
       "locationId": "1-10205172843",
@@ -109,7 +131,29 @@ GET /api/search/radius?postcode=PE13+2PR&miles=10&careHome=Y&rating=Good
       "latitude": 52.6573303,
       "longitude": 0.1451282,
       "distance": 0.5,
-      "fullAddress": "134 North Brink, Wisbech"
+      "fullAddress": "134 North Brink, Wisbech",
+      
+      "rating": "Outstanding",
+      "ratingSafe": "Outstanding",
+      "ratingEffective": "Outstanding",
+      "ratingCaring": "Outstanding",
+      "ratingResponsive": "Outstanding",
+      "ratingWellLed": "Outstanding",
+      
+      "phone": "01945474912",
+      "website": "www.activecaregroup.co.uk",
+      "beds": 13,
+      
+      "registrationStatus": "Registered",
+      "registrationDate": "2021-03-05",
+      "lastInspectionDate": "2022-07-28",
+      
+      "serviceTypes": "Nursing homes",
+      "specialisms": "Caring for adults over 65 yrs, Learning disabilities, Mental health conditions",
+      
+      "providerName": "Conifer Lodge",
+      
+      "cqcReportUrl": "https://www.cqc.org.uk/location/1-10205172843"
     }
   ]
 }
@@ -119,10 +163,44 @@ GET /api/search/radius?postcode=PE13+2PR&miles=10&careHome=Y&rating=Good
 1. Looks up postcode coordinates
 2. Identifies local authority and neighboring authorities
 3. Fetches all care providers from those authorities
-4. Calculates distance from center point to each provider
-5. Filters to providers within radius
-6. Sorts by distance (closest first)
-7. Returns top N results
+4. Gets full details for each location (including ratings, contact info, etc.)
+5. Calculates distance from center point to each provider
+6. Filters to providers within radius
+7. **Smart filtering:** Shows all registered homes + recently deregistered homes (within 3 months) to spot closures
+8. Sorts by distance (closest first)
+9. Returns top N results
+
+**Response Fields:**
+
+**Location & Distance:**
+- `locationId` - CQC unique identifier
+- `locationName` - Name of the care home
+- `postalCode` - Postcode
+- `latitude`, `longitude` - GPS coordinates
+- `distance` - Distance in miles from search postcode (1 decimal place)
+- `fullAddress` - Street address and town
+
+**Quality Ratings:**
+- `rating` - Overall CQC rating (Outstanding, Good, Requires improvement, Inadequate, Not rated)
+- `ratingSafe`, `ratingEffective`, `ratingCaring`, `ratingResponsive`, `ratingWellLed` - Breakdown by CQC key question
+
+**Contact & Capacity:**
+- `phone` - Main phone number
+- `website` - Website URL (if available)
+- `beds` - Number of beds
+
+**Status & History:**
+- `registrationStatus` - Registered or Deregistered
+- `registrationDate` - When first registered with CQC
+- `lastInspectionDate` - Most recent inspection
+
+**Services:**
+- `serviceTypes` - Type of care provided (e.g., "Residential homes", "Nursing homes")
+- `specialisms` - Specific care areas (e.g., "Dementia", "Learning disabilities")
+
+**Provider & Links:**
+- `providerName` - Organization that runs the home
+- `cqcReportUrl` - Direct link to full CQC inspection report
 
 **Performance:**
 - Typically takes 10-30 seconds for 10-mile radius
