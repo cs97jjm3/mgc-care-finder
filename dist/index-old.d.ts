@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+/**
+ * Care Provider Finder (UK & Ireland) MCP Server
+ *
+ * Find and compare care providers across UK & Ireland regulators:
+ * - CQC (England) - Real-time API ✅
+ * - Care Inspectorate Scotland - Bundled CSV ✅
+ * - Care Inspectorate Wales - Awaiting open data 🚧
+ * - RQIA (Northern Ireland) - Bundled CSV ✅
+ * - HIQA (Ireland) - Bundled CSV ✅
+ */
+export {};
+//# sourceMappingURL=index-old.d.ts.map

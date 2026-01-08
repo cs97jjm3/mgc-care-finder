@@ -2,20 +2,16 @@
 node_modules/
 
 # Build output
-dist/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
+build/
 
 # Logs
 *.log
 npm-debug.log*
 
-# Environment
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
 .env
 .env.local
