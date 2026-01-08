@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/http-server.js",
-    "dev": "tsc && node dist/http-server.js"
+    "dev": "tsc && node dist/http-server.js",
+    "test": "node test-endpoints.js"
   },
   "keywords": [
     "api",

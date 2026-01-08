@@ -48,6 +48,14 @@ npm start
 # Open: http://localhost:3000/health
 ```
 
+**Test all endpoints:**
+```bash
+# In another terminal while server is running
+npm test
+```
+
+This will test all 18 endpoints and show pass/fail status with timing.
+
 ## Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes

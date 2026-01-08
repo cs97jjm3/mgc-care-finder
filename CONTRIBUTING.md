@@ -351,6 +351,13 @@ app.get('/api/search/wales', (req, res) => {
 
 4. **Test thoroughly**
 
+Run the test suite to ensure nothing broke:
+```bash
+npm test
+```
+
+Add tests for new endpoints in `test-endpoints.js`.
+
 5. **Submit PR** with sample data file
 
 ## Questions?

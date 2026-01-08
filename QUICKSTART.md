@@ -190,6 +190,49 @@ http://localhost:3000/api/search/radius?postcode=PE13 2PR&miles=5&careHome=Y
 
 ---
 
+## Step 5: Test Everything Works
+
+**Run the automated test suite:**
+
+```bash
+# In a NEW terminal (keep server running in first terminal)
+npm test
+```
+
+This will:
+- Test all 18 endpoints
+- Show pass/fail status
+- Display timing for each endpoint
+- Give you a summary report
+
+**Expected output:**
+```
+========================================
+Care Provider Finder API Test Suite
+========================================
+
+Testing: 1. Health Check
+  /health
+  ✓ PASS - 5ms
+
+Testing: 2. CQC Search (Cambridgeshire)
+  /api/search/cqc?localAuthority=Cambridgeshire&careHome=Y&perPage=5
+  ✓ PASS - 2341ms
+
+...
+
+Total Tests:  18
+Passed:       18
+Failed:       0
+Pass Rate:    100.0%
+
+🎉 All tests passed! API is working correctly.
+```
+
+If any tests fail, check that your server is running and you have internet access.
+
+---
+
 ## Next Steps
 
 **Now that it's working:**
