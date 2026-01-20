@@ -77,7 +77,7 @@ http://localhost:3000/api/search/outstanding?region=London&maxResults=20
 
 ## Running with ngrok (Remote Access)
 
-ngrok creates a public URL that tunnels to your local server. Useful for:
+ngrok creates a public HTTPS URL that tunnels to your local server. Useful for:
 - Testing from mobile devices
 - Sharing with colleagues
 - Excel on different machines
@@ -86,7 +86,7 @@ ngrok creates a public URL that tunnels to your local server. Useful for:
 ### Setup ngrok:
 
 1. **Download ngrok**: https://ngrok.com/download
-2. **Extract and add to PATH** (or run from download folder)
+2. **Install** (Windows: install from Microsoft Store, or extract exe to a folder in PATH)
 3. **Start your server first**:
    ```bash
    npm start
@@ -97,33 +97,55 @@ ngrok creates a public URL that tunnels to your local server. Useful for:
    ngrok http 3000
    ```
 
-5. **Use the ngrok URL** (looks like: `https://abc123.ngrok-free.app`):
-   ```bash
-   # Your new public URL
-   https://abc123.ngrok-free.app/health
-   https://abc123.ngrok-free.app/api/providers/search?postcode=BT1
+5. **Copy your public URL** from the ngrok output:
+   ```
+   Forwarding  https://fickly-leguminous-gricelda.ngrok-free.dev -> http://localhost:3000
    ```
 
-**ngrok screen shows:**
+6. **Use the ngrok URL** anywhere:
+   ```bash
+   # Test from browser
+   https://fickly-leguminous-gricelda.ngrok-free.dev/health
+   
+   # Search Northern Ireland
+   https://fickly-leguminous-gricelda.ngrok-free.dev/api/providers/search?postcode=BT1
+   
+   # Radius search
+   https://fickly-leguminous-gricelda.ngrok-free.dev/api/search/radius?postcode=PE13+2PR&miles=5
+   ```
+
+**What you'll see in ngrok:**
 ```
 Session Status    online
-Forwarding        https://abc123.ngrok-free.app -> http://localhost:3000
+Account          James Murrell (Plan: Free)
+Version          3.24.0
+Region           Europe (eu)
+Forwarding       https://your-unique-url.ngrok-free.dev -> http://localhost:3000
+
+HTTP Requests
+-------------
+17:50:24  GET /api/providers/search  200 OK
 ```
 
 **Important ngrok notes:**
-- Free tier: URL changes each time you restart ngrok
-- Free tier: Session expires after 2 hours
-- Paid tier: Fixed URLs, longer sessions
-- Anyone with the URL can access your API (use with caution)
+- ✅ Free tier works great for development and testing
+- ⚠️ URL changes each time you restart ngrok (e.g., `fickly-leguminous-gricelda` will be different next time)
+- ⏰ Free sessions expire after 2 hours (just restart ngrok)
+- 🌐 Anyone with the URL can access your API (don't share publicly if data is sensitive)
+- 💰 Paid tier ($8/month): Fixed URLs, longer sessions, custom domains
+- 🔍 View request logs at http://127.0.0.1:4040 (helpful for debugging)
+
+**Ignoring the update warning:**
+If you see "update failed (error: Access is denied)" - ignore it. This just means ngrok couldn't auto-update itself. Your current version works fine.
 
 ### ngrok + Excel
 
-Use ngrok URL in Excel Power Query:
+Use your ngrok URL in Excel Power Query:
 ```
-Web.Contents("https://abc123.ngrok-free.app/api/providers/search?postcode=BT1")
+Web.Contents("https://fickly-leguminous-gricelda.ngrok-free.dev/api/providers/search?postcode=BT1")
 ```
 
-See [EXCEL-GUIDE.md](EXCEL-GUIDE.md) for detailed Excel integration.
+**Pro tip:** Save your Excel file with the query, but remember the ngrok URL will change when you restart. You'll need to update the URL in Power Query each session (or upgrade to ngrok paid for a fixed URL).
 
 ## Run Tests
 
