@@ -1,7 +1,7 @@
 {
-  "name": "care-provider-finder-http",
+  "name": "mgc-care-finder",
   "version": "2.0.0",
-  "description": "HTTP API for UK & Ireland care provider search",
+  "description": "HTTP API for UK & Ireland care provider search with radius capabilities",
   "type": "module",
   "scripts": {
     "build": "tsc",

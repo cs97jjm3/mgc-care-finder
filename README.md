@@ -1,86 +1,332 @@
-# Care Provider Finder - HTTP API
+# MGC Care Finder
 
-A REST API for searching UK & Ireland care providers with radius search capabilities. Designed to integrate with Excel, Python, JavaScript, and other tools that consume JSON APIs.
+A REST API for searching UK & Ireland care providers with radius search capabilities. Search across England (CQC), Scotland (Care Inspectorate), Northern Ireland (RQIA), and Ireland (HIQA) from a single unified API.
 
-## Overview
+## What It Does
 
-This HTTP API provides programmatic access to care provider data across the UK and Ireland:
+**Search 130,000+ care providers across UK & Ireland:**
+- **England (CQC)**: 119,000+ registered locations with live API access
+- **Scotland**: 10,600+ care services from Care Inspectorate
+- **Northern Ireland**: 1,500+ services from RQIA
+- **Ireland**: 500+ nursing homes from HIQA
 
-- **England (CQC)**: Live API access to 119,000+ registered care providers
-- **Scotland**: 10,000+ care services from Care Inspectorate datastore
-- **Northern Ireland**: 1,500+ services from RQIA register
-- **Ireland**: 500+ nursing homes from HIQA register
-
-### Key Features
-
-**Search & Discovery:**
-- **Radius Search**: Find care homes within X miles of any UK postcode
-- **Comprehensive Data**: 20+ fields per location including ratings, contact details, capacity, services
-- **Smart Filtering**: Automatically excludes old deregistered homes, shows recent closures
-- **Multi-Country Search**: Query all four UK countries + Ireland
-- **Local Authority Search**: Filter by specific councils/regions
-
-**Market Intelligence:** ⭐ NEW
-- **Outstanding Homes**: All top-rated homes grouped by region
-- **At-Risk Analysis**: Homes needing improvement (turnaround opportunities)
-- **Recent Inspections**: Track fresh CQC rating changes
-- **Large Capacity**: Corporate/investment-grade analysis
-- **New Entrants**: Track market expansion and new registrations
-- **Provider Portfolios**: Analyze entire operator performance
-- **Service Specialization**: Find homes offering specific care (Dementia, etc.)
-- **Regional Comparison**: Macro market statistics across England
-- **Authority Comparison**: Micro market analysis by local area
-
-**Integration:**
-- **Real-time England Data**: Direct CQC API integration
-- **Distance Calculation**: Automatically calculates and sorts by distance
-- **Excel-Ready**: Power Query compatible (see EXCEL-GUIDE.md)
+**Key Features:**
+- 🔍 **Universal Search**: Single endpoint searches all regions by postcode
+- 📍 **Radius Search**: Find care homes within X miles of any UK postcode
+- 🎯 **Smart Filtering**: By rating, service type, capacity, registration date
+- 📊 **Market Intelligence**: Outstanding homes, at-risk analysis, regional comparisons
+- 🔗 **Excel Integration**: Power Query compatible for dashboards
+- 🌐 **Multi-Country**: Unified data format across UK + Ireland
 
 ## Quick Start
 
-See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide.
+### Prerequisites
+- Node.js 18+ ([download](https://nodejs.org/))
+- ngrok (optional, for remote access - [download](https://ngrok.com/download))
 
-**TL;DR:**
+### Installation
+
 ```bash
+# Clone or download the repository
+cd mgc-care-finder
+
+# Install dependencies
 npm install
+
+# Build TypeScript
 npm run build
+
+# Start the server
 npm start
-# Open: http://localhost:3000/health
 ```
 
-**Test all endpoints:**
+Server runs at: **http://localhost:3000**
+
+Test it works:
 ```bash
-# In another terminal while server is running
+# In browser or terminal
+curl http://localhost:3000/health
+```
+
+### First Search
+
+Try these examples:
+
+**Universal search (any postcode):**
+```bash
+# Northern Ireland
+http://localhost:3000/api/providers/search?postcode=BT1&maxResults=10
+
+# Scotland
+http://localhost:3000/api/providers/search?postcode=G1&maxResults=10
+
+# England
+http://localhost:3000/api/providers/search?postcode=PE13&maxResults=10
+```
+
+**Radius search (England):**
+```bash
+# Find care homes within 5 miles of Wisbech
+http://localhost:3000/api/search/radius?postcode=PE13+2PR&miles=5&careHome=Y
+```
+
+**Outstanding-rated homes:**
+```bash
+http://localhost:3000/api/search/outstanding?region=London&maxResults=20
+```
+
+## Running with ngrok (Remote Access)
+
+ngrok creates a public URL that tunnels to your local server. Useful for:
+- Testing from mobile devices
+- Sharing with colleagues
+- Excel on different machines
+- Remote access without deployment
+
+### Setup ngrok:
+
+1. **Download ngrok**: https://ngrok.com/download
+2. **Extract and add to PATH** (or run from download folder)
+3. **Start your server first**:
+   ```bash
+   npm start
+   ```
+
+4. **In another terminal, start ngrok**:
+   ```bash
+   ngrok http 3000
+   ```
+
+5. **Use the ngrok URL** (looks like: `https://abc123.ngrok-free.app`):
+   ```bash
+   # Your new public URL
+   https://abc123.ngrok-free.app/health
+   https://abc123.ngrok-free.app/api/providers/search?postcode=BT1
+   ```
+
+**ngrok screen shows:**
+```
+Session Status    online
+Forwarding        https://abc123.ngrok-free.app -> http://localhost:3000
+```
+
+**Important ngrok notes:**
+- Free tier: URL changes each time you restart ngrok
+- Free tier: Session expires after 2 hours
+- Paid tier: Fixed URLs, longer sessions
+- Anyone with the URL can access your API (use with caution)
+
+### ngrok + Excel
+
+Use ngrok URL in Excel Power Query:
+```
+Web.Contents("https://abc123.ngrok-free.app/api/providers/search?postcode=BT1")
+```
+
+See [EXCEL-GUIDE.md](EXCEL-GUIDE.md) for detailed Excel integration.
+
+## Run Tests
+
+Tests all 19 endpoints to verify everything works:
+
+```bash
+# Start server in one terminal
+npm start
+
+# Run tests in another terminal
 npm test
 ```
 
-This will test all 18 endpoints and show pass/fail status with timing.
+Expected output:
+```
+=== Core Search Endpoints (10) ===
+✓ PASS - Health Check
+✓ PASS - Universal Provider Search (Northern Ireland)
+✓ PASS - Universal Provider Search (Scotland)
+...
+
+Total Tests:  19
+Passed:       19
+Pass Rate:    100%
+```
+
+## Architecture
+
+**Why Two Versions?**
+
+This HTTP API complements the [stdio MCP server](https://github.com/cs97jjm3/care-provider-finder):
+
+| Feature | stdio MCP | HTTP API (this) |
+|---------|-----------|-----------------|
+| **Use with** | Claude Desktop | Excel, Python, Web |
+| **Access** | stdio process | HTTP REST |
+| **Best for** | Interactive chat | Programmatic access |
+| **Radius search** | Too slow | ✅ Optimized |
+| **Excel integration** | ❌ | ✅ Power Query |
+| **Natural language** | ✅ | ❌ |
+
+**Problem solved:**
+- MCP uses stdio (local process communication)
+- Can't call stdio from Excel, Python, or over network
+- HTTP API exposes same data via standard REST
+- Use both: MCP for chat, HTTP for automation
 
 ## Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
-- **[ENDPOINTS.md](ENDPOINTS.md)** - Quick reference of all 18 endpoints ⭐
+- **[ENDPOINTS.md](ENDPOINTS.md)** - Quick reference of all 19 endpoints ⭐
 - **[API-DOCS.md](API-DOCS.md)** - Complete API reference with examples
 - **[EXCEL-GUIDE.md](EXCEL-GUIDE.md)** - Connect Excel using Power Query
+- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute getting started guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and technical decisions
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
 
-## Why This Exists
+## Key Endpoints
 
-This is the HTTP version of the [care-provider-finder MCP server](https://github.com/cs97jjm3/care-provider-finder). The MCP server works great with Claude Desktop but uses stdio which isn't accessible over a network.
+### Universal Provider Search (All Regions)
+```
+GET /api/providers/search?postcode={postcode}&country={ni|scotland|ireland|england}
+```
+Auto-detects region or force with `country` parameter.
 
-**Use the HTTP API for:**
-- Excel data connections
-- Python/JavaScript applications  
-- Business intelligence tools
-- Radius searches
+### Radius Search (England)
+```
+GET /api/search/radius?postcode={postcode}&miles={miles}&careHome=Y
+```
+Find care homes within X miles. Includes ratings, contact info, capacity.
 
-**Use the stdio MCP for:**
-- Claude Desktop integration
-- Natural language queries
-- Interactive research
+### Market Intelligence
+```
+GET /api/search/outstanding          # All Outstanding-rated homes
+GET /api/search/at-risk              # Homes needing improvement
+GET /api/search/large-homes          # High-capacity facilities
+GET /api/provider/portfolio          # Operator analysis
+GET /api/compare/regions             # Regional statistics
+```
+
+See [ENDPOINTS.md](ENDPOINTS.md) for complete list.
+
+## Data Sources
+
+**England:**
+- **Source**: CQC Public API (live, real-time)
+- **Status**: Always current - no download needed
+- **API**: https://api.cqc.org.uk/public/v1
+- **Records**: 119,000+ locations
+
+**Scotland:**
+- **Source**: Care Inspectorate datastore CSV
+- **Bundled**: `/data/scotland.csv` (included in repo)
+- **Download**: [Care Inspectorate Open Data Portal](https://www.careinspectorate.com/index.php/publications-statistics/94-public/data-and-analysis/2806-open-data)
+- **Update frequency**: Quarterly
+- **How to update**:
+  1. Download latest CSV from portal
+  2. Replace `/data/scotland.csv`
+  3. Restart server
+- **Records**: 10,600+ services
+
+**Northern Ireland:**
+- **Source**: RQIA register Excel export
+- **Bundled**: `/data/rqia.xlsx` (included in repo)
+- **Download**: [RQIA Service Search](https://admin.rqia.org.uk/search/servicesearch.cfm)
+  1. Go to RQIA service search
+  2. Leave all filters blank
+  3. Click "Search"
+  4. Click "Export to Excel"
+  5. Save as `/data/rqia.xlsx`
+- **Update frequency**: Monthly recommended
+- **Records**: 1,500+ services
+
+**Ireland:**
+- **Source**: HIQA register CSV
+- **Bundled**: `/data/hiqa.csv` (included in repo)
+- **Download**: [HIQA Find a Centre](https://www.hiqa.ie/areas-we-work/regulation/registers)
+  1. Go to HIQA registers page
+  2. Download "Designated Centres Register"
+  3. Export to CSV
+  4. Save as `/data/hiqa.csv`
+- **Update frequency**: Quarterly
+- **Records**: 500+ nursing homes
+
+**Checking Data Freshness:**
+```bash
+# Check loaded record counts and see if data is current
+curl http://localhost:3000/health
+```
+
+**Data Update Schedule:**
+- England: Real-time (no action needed)
+- Scotland: Update quarterly
+- Northern Ireland: Update monthly
+- Ireland: Update quarterly
+
+## Use Cases
+
+**Business Analysts:**
+- Market research and competitor analysis
+- Regional comparison and benchmarking
+- Provider portfolio analysis
+- Excel dashboards and reports
+
+**Developers:**
+- Python data analysis scripts
+- Automated monitoring systems
+- Integration with other tools
+- Web applications
+
+**Care Sector Professionals:**
+- Find local providers by postcode
+- Track CQC rating changes
+- Identify service gaps
+- Build referral networks
+
+## Development
+
+**Project structure:**
+```
+mgc-care-finder/
+├── src/
+│   └── http-server.ts       # Main API server
+├── data/                     # Scotland, NI, Ireland CSV/Excel
+├── dist/                     # Compiled JavaScript
+├── test-endpoints.js         # Test suite
+└── docs/                     # Documentation
+```
+
+**Build and run:**
+```bash
+npm run build    # Compile TypeScript
+npm start        # Run server
+npm run dev      # Build + run in one command
+npm test         # Run test suite
+```
+
+**Tech stack:**
+- TypeScript + Node.js
+- Express.js (HTTP server)
+- XLSX (Excel file parsing)
+- CQC Public API integration
+
+## Troubleshooting
+
+**Server won't start:**
+- Check Node.js version: `node --version` (need 18+)
+- Port 3000 in use? Change in `src/http-server.ts`
+- Run `npm install` again
+
+**Tests failing:**
+- Make sure server is running first (`npm start`)
+- Wait for "Server running" message
+- Check `/health` endpoint returns data
+
+**No results returned:**
+- Scotland/NI/Ireland: Check CSV files exist in `/data`
+- England: Check internet connection (uses CQC API)
+- Check postcode format (BT1, G1, PE13, etc.)
+
+**ngrok issues:**
+- Make sure server runs on port 3000
+- ngrok free tier expires after 2 hours
+- URL changes each restart (free tier)
 
 ## License
 
@@ -89,3 +335,5 @@ MIT License - see [LICENSE](LICENSE) file
 ## Author
 
 James Morris - Business Analyst at The Access Group
+
+Built to solve the problem of accessing care provider data from multiple tools (Claude Desktop, Excel, Python) using different protocols (stdio MCP vs HTTP REST).

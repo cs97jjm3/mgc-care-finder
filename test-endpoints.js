@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Test Script for Care Provider Finder HTTP API
- * Tests all 18 endpoints to verify they work correctly
+ * Test Script for MGC Care Finder HTTP API
+ * Tests all 19 endpoints to verify they work correctly
  */
 
 const BASE_URL = 'http://localhost:3000';
@@ -54,13 +54,13 @@ async function test(name, url, expectedStatus = 200, minResults = 0) {
 
 async function runTests() {
   console.log(`\n${BLUE}========================================${RESET}`);
-  console.log(`${BLUE}Care Provider Finder API Test Suite${RESET}`);
+  console.log(`${BLUE}MGC Care Finder API Test Suite${RESET}`);
   console.log(`${BLUE}========================================${RESET}\n`);
   
   console.log(`${YELLOW}Testing against: ${BASE_URL}${RESET}\n`);
   
   // ===== Core Search Endpoints =====
-  console.log(`${BLUE}=== Core Search Endpoints (9) ===${RESET}\n`);
+  console.log(`${BLUE}=== Core Search Endpoints (10) ===${RESET}\n`);
   
   await test(
     '1. Health Check',
@@ -68,112 +68,126 @@ async function runTests() {
   );
   
   await test(
-    '2. CQC Search (Cambridgeshire)',
+    '2. Universal Provider Search (Northern Ireland) ⭐ NEW',
+    '/api/providers/search?postcode=BT1&country=ni&maxResults=10',
+    200,
+    1
+  );
+  
+  await test(
+    '3. Universal Provider Search (Scotland)',
+    '/api/providers/search?postcode=G1&maxResults=10',
+    200,
+    1
+  );
+  
+  await test(
+    '4. CQC Search (Cambridgeshire)',
     '/api/search/cqc?localAuthority=Cambridgeshire&careHome=Y&perPage=5',
     200,
     1
   );
   
   await test(
-    '3. Postcode Search',
+    '5. Postcode Search',
     '/api/search/postcode?postcode=PE13+2PR&careHome=Y',
     200
   );
   
   await test(
-    '4. Radius Search ⭐',
+    '6. Radius Search',
     '/api/search/radius?postcode=PE13+2PR&miles=5&careHome=Y',
     200,
     1
   );
   
   await test(
-    '5. Provider Details',
+    '7. Provider Details',
     '/api/provider/1-123039495',
     200
   );
   
   await test(
-    '6. Scotland Search',
+    '8. Scotland Search',
     '/api/search/scotland?councilArea=Edinburgh&maxResults=5',
     200,
     1
   );
   
   await test(
-    '7. Northern Ireland Search',
+    '9. Northern Ireland Search',
     '/api/search/northern-ireland?district=Belfast&maxResults=5',
     200,
     1
   );
   
   await test(
-    '8. Ireland Search',
+    '10. Ireland Search',
     '/api/search/ireland?county=Dublin&maxResults=5',
     200,
     1
   );
   
   await test(
-    '9. Postcode Lookup',
+    '11. Postcode Lookup',
     '/api/postcode/PE13%202PR',
     200
   );
   
   // ===== Market Intelligence Endpoints =====
-  console.log(`${BLUE}=== Market Intelligence Endpoints (9) ===${RESET}\n`);
+  console.log(`${BLUE}=== Market Intelligence Endpoints (8) ===${RESET}\n`);
   
   await test(
-    '10. Outstanding Homes (London)',
+    '12. Outstanding Homes (London)',
     '/api/search/outstanding?region=London&maxResults=10',
     200,
     1
   );
   
   await test(
-    '11. At-Risk Homes',
+    '13. At-Risk Homes',
     '/api/search/at-risk?rating=Inadequate&maxResults=10',
     200
   );
   
   await test(
-    '12. Recent Inspections (30 days)',
+    '14. Recent Inspections (30 days)',
     '/api/search/recent-inspections?days=30&maxResults=10',
     200
   );
   
   await test(
-    '13. Large Capacity Homes (50+ beds)',
+    '15. Large Capacity Homes (50+ beds)',
     '/api/search/large-homes?minBeds=50&region=London&maxResults=10',
     200
   );
   
   await test(
-    '14. New Registrations (6 months)',
+    '16. New Registrations (6 months)',
     '/api/search/new-registrations?months=6&maxResults=10',
     200
   );
   
   await test(
-    '15. Provider Portfolio (HC-One)',
+    '17. Provider Portfolio (HC-One)',
     '/api/provider/portfolio?providerName=HC-One',
     200
   );
   
   await test(
-    '16. Service Analysis (Dementia)',
+    '18. Service Analysis (Dementia)',
     '/api/analyze/services?serviceType=Dementia&region=London&maxResults=10',
     200
   );
   
   await test(
-    '17. Compare Regions',
+    '19. Compare Regions',
     '/api/compare/regions',
     200
   );
   
   await test(
-    '18. Compare Authorities',
+    '20. Compare Authorities',
     '/api/compare/authorities?authorities=Cambridgeshire,Peterborough',
     200
   );

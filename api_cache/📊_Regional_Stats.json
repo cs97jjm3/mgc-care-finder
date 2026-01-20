@@ -1,0 +1,94 @@
+{
+  "regions": [
+    {
+      "region": "London",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "South East",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "South West",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "East of England",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "West Midlands",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "East Midlands",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "Yorkshire and the Humber",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "North West",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    },
+    {
+      "region": "North East",
+      "totalHomes": 0,
+      "ratings": {
+        "Outstanding": 0,
+        "Good": 0,
+        "Requires improvement": 0,
+        "Inadequate": 0
+      }
+    }
+  ]
+}

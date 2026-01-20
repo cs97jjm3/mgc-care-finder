@@ -1,6 +1,6 @@
 # API Documentation
 
-Complete reference for all Care Provider Finder HTTP API endpoints.
+Complete reference for all MGC Care Finder HTTP API endpoints.
 
 ## Base URL
 
@@ -51,6 +51,182 @@ Check if the API is running and view loaded data counts.
 
 **Status Codes:**
 - `200` - OK
+
+---
+
+### Universal Provider Search ⭐ NEW
+
+Search for care providers across all UK and Ireland regions by postcode. Auto-detects the region based on postcode format, or use the `country` parameter to force a specific region.
+
+**Endpoint:** `GET /api/providers/search`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------||
+| `postcode` | string | Yes | Any UK/Ireland postcode | `BT1`, `G1`, `PE13`, `D01` |
+| `country` | string | No | Force specific region | `ni`, `scotland`, `ireland`, `england` |
+| `maxResults` | number | No | Max results (default: 20) | `50` |
+
+**Country Values:**
+- `ni` - Northern Ireland (RQIA)
+- `scotland` - Scotland (Care Inspectorate)
+- `ireland` - Ireland (HIQA)
+- `england` - England (CQC)
+
+**Auto-Detection Rules:**
+- `BT` postcodes → Northern Ireland
+- Scottish postcode areas (AB, DD, DG, EH, FK, G, HS, IV, KA, KW, KY, ML, PA, PH, TD, ZE) → Scotland
+- Irish Eircode areas (A, C, D, E, F, H, K, N, P, R, T, V, W, X, Y) → Ireland
+- All other UK postcodes → England
+
+**Example Requests:**
+```
+# Auto-detect region from postcode
+GET /api/providers/search?postcode=BT1&maxResults=20
+
+# Force Northern Ireland search
+GET /api/providers/search?postcode=BT1&country=ni
+
+# Search Scotland
+GET /api/providers/search?postcode=G1&maxResults=50
+
+# Search Ireland
+GET /api/providers/search?postcode=D01&country=ireland
+```
+
+**Example Response (Northern Ireland):**
+```json
+{
+  "postcode": "BT1",
+  "postcodeArea": "BT1",
+  "region": "Northern Ireland",
+  "count": 20,
+  "providers": [
+    {
+      "source": "RQIA",
+      "name": "Aaron House",
+      "address": "40 Rosneath Gardens",
+      "town": "Dundonald",
+      "postcode": "BT16 1UN",
+      "category": "Day Care Setting (DCS)",
+      "phone": "028 9041 0045",
+      "manager": "Pauline Allen",
+      "provider": "Presbyterian Council of Social Witness",
+      "region": "Northern Ireland"
+    }
+  ]
+}
+```
+
+**Example Response (Scotland):**
+```json
+{
+  "postcode": "G1",
+  "postcodeArea": "G1",
+  "region": "Scotland",
+  "count": 15,
+  "providers": [
+    {
+      "source": "Care Inspectorate",
+      "name": "Glasgow Care Home",
+      "address": "123 Sauchiehall Street, Glasgow",
+      "town": "Glasgow",
+      "postcode": "G1 2AB",
+      "councilArea": "Glasgow City",
+      "serviceType": "Care Home Service",
+      "subtype": "Care Home",
+      "phone": "0141 123 4567",
+      "region": "Scotland"
+    }
+  ]
+}
+```
+
+**Example Response (Ireland):**
+```json
+{
+  "postcode": "D01",
+  "postcodeArea": "D01",
+  "region": "Ireland",
+  "count": 8,
+  "providers": [
+    {
+      "source": "HIQA",
+      "name": "Dublin Nursing Home",
+      "address": "123 O'Connell Street, Dublin, D01 AB12",
+      "postcode": "D01AB12",
+      "county": "Dublin",
+      "phone": "01 234 5678",
+      "personInCharge": "Mary Murphy",
+      "provider": "Dublin Care Ltd",
+      "maxOccupancy": 45,
+      "region": "Ireland"
+    }
+  ]
+}
+```
+
+**Response Fields by Region:**
+
+**Northern Ireland (RQIA):**
+- `source` - Always "RQIA"
+- `name` - Service name
+- `address` - Full address
+- `town` - Town/city
+- `postcode` - BT postcode
+- `category` - Service category (e.g., "Nursing Home", "Day Care Setting")
+- `phone` - Contact number
+- `manager` - Manager name
+- `provider` - Provider organization name
+
+**Scotland (Care Inspectorate):**
+- `source` - Always "Care Inspectorate"
+- `name` - Service name
+- `address` - Full address
+- `town` - Town/city
+- `postcode` - Scottish postcode
+- `councilArea` - Council area name
+- `serviceType` - Type of service
+- `subtype` - Service subtype
+- `phone` - Contact number
+
+**Ireland (HIQA):**
+- `source` - Always "HIQA"
+- `name` - Centre name
+- `address` - Full address with embedded Eircode
+- `postcode` - Extracted Eircode
+- `county` - Irish county
+- `phone` - Contact number
+- `personInCharge` - Person in charge name
+- `provider` - Registration provider name
+- `maxOccupancy` - Maximum occupancy
+
+**England (CQC):**
+- `source` - Always "CQC"
+- `locationId` - CQC location ID
+- `name` - Location name
+- `postcode` - English postcode
+- `localAuthority` - Local authority name
+- `rating` - Overall CQC rating
+- `cqcUrl` - Link to CQC report
+
+**Use Cases:**
+- Quick multi-country provider lookup
+- Building referral networks across UK/Ireland
+- Market research across regions
+- Postcode-based provider discovery
+
+**Performance:**
+- Northern Ireland: < 1 second (local data)
+- Scotland: < 1 second (local data)
+- Ireland: < 1 second (local data)
+- England: 2-5 seconds (CQC API call)
+
+**Status Codes:**
+- `200` - OK
+- `400` - Missing postcode parameter
+- `500` - Server error
 
 ---
 

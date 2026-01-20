@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Care Provider Finder HTTP API
- * Exposes the MCP functionality as REST endpoints
+ * MGC Care Finder HTTP API
+ * Exposes care provider search functionality as REST endpoints
  */
 
 import express from 'express';
@@ -167,6 +167,190 @@ app.get('/api/provider/:locationId', async (req, res) => {
     
     const data = await response.json();
     res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// Search providers by postcode across all regions
+app.get('/api/providers/search', async (req, res) => {
+  try {
+    const { postcode, country, maxResults = 20 } = req.query;
+    
+    if (!postcode) {
+      return res.status(400).json({ error: 'Postcode parameter is required' });
+    }
+    
+    const searchPostcode = (postcode as string).trim().toUpperCase();
+    const postcodeArea = searchPostcode.split(/\s+/)[0]; // e.g., BT1, G1, PE13
+    
+    let results: any[] = [];
+    let region = 'Unknown';
+    
+    // Allow country parameter to override auto-detection
+    // country values: 'ni' (Northern Ireland), 'scotland', 'ireland', 'england'
+    const forceCountry = country ? (country as string).toLowerCase() : null;
+    
+    // Determine region based on postcode prefix or forced country
+    if (forceCountry === 'ni' || (!forceCountry && postcodeArea.startsWith('BT'))) {
+      // Northern Ireland
+      region = 'Northern Ireland';
+      results = rqiaData.filter(r => {
+        const providerPostcode = r['Postcode']?.toString().trim().toUpperCase() || '';
+        return providerPostcode.startsWith(postcodeArea);
+      }).map(r => ({
+        source: 'RQIA',
+        name: r['ServiceName'],
+        address: r['AddressLine1'] + (r['AddressLine2'] ? ', ' + r['AddressLine2'] : ''),
+        town: r['Town'],
+        postcode: r['Postcode'],
+        category: r['Category'],
+        phone: r['Tel'],
+        manager: r['Manager'],
+        provider: r['ProviderName'],
+        region: 'Northern Ireland'
+      }));
+    } else if (forceCountry === 'scotland' || (!forceCountry && postcodeArea.match(/^[A-Z]{1,2}\d{1,2}$/))) {
+      // Check if it's Scotland (common Scottish postcode areas)
+      const scotlandAreas = ['AB', 'DD', 'DG', 'EH', 'FK', 'G', 'HS', 'IV', 'KA', 'KW', 'KY', 'ML', 'PA', 'PH', 'TD', 'ZE'];
+      const irishAreas = ['A', 'C', 'D', 'E', 'F', 'H', 'K', 'N', 'P', 'R', 'T', 'V', 'W', 'X', 'Y'];
+      
+      if (forceCountry === 'scotland' || scotlandAreas.some(area => postcodeArea.startsWith(area))) {
+        // Scotland
+        region = 'Scotland';
+        results = scotlandData.filter(r => {
+          const providerPostcode = r['Service_Postcode']?.toString().trim().toUpperCase() || '';
+          return providerPostcode.startsWith(postcodeArea);
+        }).map(r => ({
+          source: 'Care Inspectorate',
+          name: r['ServiceName'],
+          address: [r['Address_line_1'], r['Address_line_2'], r['Address_line_3']].filter(Boolean).join(', '),
+          town: r['Service_town'],
+          postcode: r['Service_Postcode'],
+          councilArea: r['Council_Area_Name'],
+          serviceType: r['ServiceType'],
+          subtype: r['Subtype'],
+          phone: r['Service_Phone_Number'],
+          region: 'Scotland'
+        }));
+      } else if (forceCountry === 'ireland' || irishAreas.some(area => postcodeArea.startsWith(area))) {
+        // Ireland (Eircode system) - extract postcode from address
+        region = 'Ireland';
+        results = hiqaData.filter(r => {
+          const address = r['Centre_Address']?.toString() || '';
+          // Extract Eircode from address (format: "Street, Town, EIRCODE")
+          const eircodeMatch = address.match(/[A-Z]\d{2}\s?[A-Z0-9]{4}/);
+          if (eircodeMatch) {
+            const eircode = eircodeMatch[0].replace(/\s/g, '');
+            return eircode.startsWith(postcodeArea);
+          }
+          return false;
+        }).map(r => {
+          const address = r['Centre_Address']?.toString() || '';
+          const eircodeMatch = address.match(/[A-Z]\d{2}\s?[A-Z0-9]{4}/);
+          const eircode = eircodeMatch ? eircodeMatch[0] : '';
+          
+          return {
+            source: 'HIQA',
+            name: r['Centre_Title'],
+            address: r['Centre_Address'],
+            postcode: eircode,
+            county: r['County'],
+            phone: r['Centre_Phone'],
+            personInCharge: r['Person_in_Charge'],
+            provider: r['Registration_Provider'],
+            maxOccupancy: r['Maximum_Occupancy'],
+            region: 'Ireland'
+          };
+        });
+      } else if (forceCountry === 'england') {
+        // Forced England search
+        region = 'England';
+        try {
+          // Get postcode info first
+          const postcodeRes = await fetch(`${POSTCODES_API_BASE}/postcodes/${searchPostcode}`);
+          const postcodeData = await postcodeRes.json();
+          
+          if (postcodeData.result) {
+            const localAuthority = postcodeData.result.admin_district;
+            
+            // Search CQC
+            let url = `${CQC_API_BASE}/locations?localAuthority=${encodeURIComponent(localAuthority)}&perPage=50`;
+            const response = await fetch(url, {
+              headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            
+            const data = await response.json();
+            
+            if (data.locations) {
+              results = data.locations
+                .filter((loc: any) => loc.postalCode?.toUpperCase().startsWith(postcodeArea))
+                .map((loc: any) => ({
+                  source: 'CQC',
+                  locationId: loc.locationId,
+                  name: loc.locationName,
+                  postcode: loc.postalCode,
+                  localAuthority: localAuthority,
+                  rating: loc.overallRating,
+                  region: 'England',
+                  cqcUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                }));
+            }
+          }
+        } catch (error) {
+          console.error('Error searching CQC:', error);
+        }
+      } else {
+        // England - use CQC API
+        region = 'England';
+        try {
+          // Get postcode info first
+          const postcodeRes = await fetch(`${POSTCODES_API_BASE}/postcodes/${searchPostcode}`);
+          const postcodeData = await postcodeRes.json();
+          
+          if (postcodeData.result) {
+            const localAuthority = postcodeData.result.admin_district;
+            
+            // Search CQC
+            let url = `${CQC_API_BASE}/locations?localAuthority=${encodeURIComponent(localAuthority)}&perPage=50`;
+            const response = await fetch(url, {
+              headers: { 'Ocp-Apim-Subscription-Key': CQC_SUBSCRIPTION_KEY }
+            });
+            
+            const data = await response.json();
+            
+            if (data.locations) {
+              results = data.locations
+                .filter((loc: any) => loc.postalCode?.toUpperCase().startsWith(postcodeArea))
+                .map((loc: any) => ({
+                  source: 'CQC',
+                  locationId: loc.locationId,
+                  name: loc.locationName,
+                  postcode: loc.postalCode,
+                  localAuthority: localAuthority,
+                  rating: loc.overallRating,
+                  region: 'England',
+                  cqcUrl: `https://www.cqc.org.uk/location/${loc.locationId}`
+                }));
+            }
+          }
+        } catch (error) {
+          console.error('Error searching CQC:', error);
+        }
+      }
+    }
+    
+    // Limit results
+    results = results.slice(0, Number(maxResults));
+    
+    res.json({
+      postcode: searchPostcode,
+      postcodeArea: postcodeArea,
+      region: region,
+      count: results.length,
+      providers: results
+    });
+    
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
@@ -1115,7 +1299,7 @@ app.get('/api/compare/authorities', async (req, res) => {
 initializeData();
 
 app.listen(PORT, () => {
-  console.log(`Care Provider Finder HTTP API v2.0.0`);
+  console.log(`MGC Care Finder HTTP API v2.0.0`);
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
 });
