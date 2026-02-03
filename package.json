@@ -16,7 +16,7 @@
     "care-provider",
     "http"
   ],
-  "author": "James",
+  "author": "James Murrell",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",

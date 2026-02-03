@@ -356,6 +356,6 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## Author
 
-James Morris - Business Analyst at The Access Group
+James Murrell - 
 
 Built to solve the problem of accessing care provider data from multiple tools (Claude Desktop, Excel, Python) using different protocols (stdio MCP vs HTTP REST).
